@@ -13,7 +13,6 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApplicationScoped
 public class QuotationService {
@@ -30,29 +29,37 @@ public class QuotationService {
 
     public void getCurrencyPrice() {
         CurrencyPriceDTO currencyPriceInfo = currencyPriceClient.getPriceByPair("USD-BRL");
-        if (updateCurrentInfoPrice(currencyPriceInfo)) {
-            kafkaEvents.sendNewKafkaEvent(QuotationDTO
-                    .builder()
-                    .currencyPrice(new BigDecimal(currencyPriceInfo.getUSDBRL().getBid()))
-                    .date(new Date())
-                    .build());
+        if (currencyPriceInfo != null && currencyPriceInfo.getUSDBRL() != null) {
+            if (updateCurrentInfoPrice(currencyPriceInfo)) {
+                kafkaEvents.sendNewKafkaEvent(QuotationDTO
+                        .builder()
+                        .currencyPrice(new BigDecimal(currencyPriceInfo.getUSDBRL().getBid()))
+                        .date(new Date())
+                        .build());
+            }
+        } else {
+            System.err.println("CurrencyPriceDTO ou USDBRL está null.");
         }
     }
 
     private boolean updateCurrentInfoPrice(CurrencyPriceDTO currencyPriceInfo) {
+        if (currencyPriceInfo == null || currencyPriceInfo.getUSDBRL() == null) {
+            System.err.println("CurrencyPriceDTO ou USDBRL está null.");
+            return false;
+        }
 
         BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.getUSDBRL().getBid());
         boolean updatePrice = false;
 
         List<QuotationEntity> quotationList = quotationRepository.findAll().list();
 
-        if(quotationList.isEmpty()){
+        if (quotationList.isEmpty()) {
             saveQuotation(currencyPriceInfo);
             updatePrice = true;
         } else {
-            QuotationEntity lastDollarPrice = quotationList.get(quotationList.size() -1);
+            QuotationEntity lastDollarPrice = quotationList.get(quotationList.size() - 1);
 
-            if(currentPrice.floatValue() > lastDollarPrice.getCurrencyPrice().floatValue()){
+            if (currentPrice.floatValue() > lastDollarPrice.getCurrencyPrice().floatValue()) {
                 updatePrice = true;
                 saveQuotation(currencyPriceInfo);
             }
