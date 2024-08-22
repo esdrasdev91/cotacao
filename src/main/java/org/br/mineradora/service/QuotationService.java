@@ -2,6 +2,7 @@ package org.br.mineradora.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import lombok.extern.jackson.Jacksonized;
 import org.br.mineradora.client.CurrencyPriceClient;
 import org.br.mineradora.dto.CurrencyPriceDTO;
 import org.br.mineradora.dto.QuotationDTO;
@@ -27,56 +28,61 @@ public class QuotationService {
     @Inject
     KafkaEvents kafkaEvents;
 
-    public void getCurrencyPrice() {
-        CurrencyPriceDTO currencyPriceInfo = currencyPriceClient.getPriceByPair("USD-BRL");
-        if (currencyPriceInfo != null && currencyPriceInfo.getUSDBRL() != null) {
-            if (updateCurrentInfoPrice(currencyPriceInfo)) {
-                kafkaEvents.sendNewKafkaEvent(QuotationDTO
-                        .builder()
-                        .currencyPrice(new BigDecimal(currencyPriceInfo.getUSDBRL().getBid()))
-                        .date(new Date())
-                        .build());
+    @Jacksonized
+    public void getCurrencyPrice(String pair) {
+        List<CurrencyPriceDTO> currencyPriceInfoList = currencyPriceClient.getPriceByPair(pair);
+        if (!currencyPriceInfoList.isEmpty()) {
+            CurrencyPriceDTO currencyPriceInfo = currencyPriceInfoList.get(0);
+            if (currencyPriceInfo != null) {
+                if (updateCurrentInfoPrice(currencyPriceInfo, pair)) {
+                    kafkaEvents.sendNewKafkaEvent(QuotationDTO
+                            .builder()
+                            .currencyPrice(new BigDecimal(currencyPriceInfo.getBid()))
+                            .date(new Date())
+                            .build());
+                }
+            } else {
+                System.err.println("CurrencyPriceDTO está null.");
             }
         } else {
-            System.err.println("CurrencyPriceDTO ou USDBRL está null.");
+            System.err.println("A lista de CurrencyPriceDTO está vazia.");
         }
     }
 
-    private boolean updateCurrentInfoPrice(CurrencyPriceDTO currencyPriceInfo) {
-        if (currencyPriceInfo == null || currencyPriceInfo.getUSDBRL() == null) {
-            System.err.println("CurrencyPriceDTO ou USDBRL está null.");
+    private Boolean updateCurrentInfoPrice(CurrencyPriceDTO currencyPriceInfo, String pair) {
+        if (currencyPriceInfo == null || currencyPriceInfo.getBid() == null) {
+            System.err.println("CurrencyPriceDTO ou bid está null.");
             return false;
         }
 
-        BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.getUSDBRL().getBid());
-        boolean updatePrice = false;
+        BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.getBid());
+        Boolean updatePrice = false;
 
-        List<QuotationEntity> quotationList = quotationRepository.findAll().list();
+        QuotationEntity lastPrice = quotationRepository.find("pair", pair).singleResultOptional().orElse(null);
 
-        if (quotationList.isEmpty()) {
-            saveQuotation(currencyPriceInfo);
+        if (lastPrice == null) {
+            saveQuotation(currencyPriceInfo, pair);
             updatePrice = true;
         } else {
-            QuotationEntity lastDollarPrice = quotationList.get(quotationList.size() - 1);
-
-            if (currentPrice.floatValue() > lastDollarPrice.getCurrencyPrice().floatValue()) {
+            if (currentPrice.floatValue() > lastPrice.getCurrencyPrice().floatValue()) {
                 updatePrice = true;
-                saveQuotation(currencyPriceInfo);
+                saveQuotation(currencyPriceInfo, pair);
             }
         }
 
         return updatePrice;
     }
 
-    private void saveQuotation(CurrencyPriceDTO currencyInfo){
+    private void saveQuotation(CurrencyPriceDTO currencyInfo, String pair){
         QuotationEntity quotation = new QuotationEntity();
 
         quotation.setDate(new Date());
-        quotation.setCurrencyPrice(new BigDecimal(currencyInfo.getUSDBRL().getBid()));
-        quotation.setPctChange(currencyInfo.getUSDBRL().getPctChange());
-        quotation.setPair("USD-BRL");
+        quotation.setCurrencyPrice(new BigDecimal(currencyInfo.getBid()));
+        quotation.setPctChange(currencyInfo.getPctChange());
+        quotation.setPair(pair);
 
         quotationRepository.persist(quotation);
+        System.err.println("Salvo com sucesso!" + quotation);
     }
 
 }

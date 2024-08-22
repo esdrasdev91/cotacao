@@ -13,8 +13,14 @@ import java.util.Date;
 @AllArgsConstructor
 public class QuotationDTO {
 
+    private Long id;
+
     private Date date;
 
     private BigDecimal currencyPrice;
+
+    private String pctChange;
+
+    private String pair;
 
 }

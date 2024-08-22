@@ -7,13 +7,14 @@ import jakarta.ws.rs.PathParam;
 import org.br.mineradora.dto.CurrencyPriceDTO;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@Path("/last")
-@RegisterRestClient(baseUri="https://economia.awesomeapi.com.br")
+import java.util.List;
+
+@Path("/{pair}")
+@RegisterRestClient
 @ApplicationScoped
 public interface CurrencyPriceClient {
 
     @GET
-    @Path("/{pair}")
-    CurrencyPriceDTO getPriceByPair(@PathParam("pair") String pair);
+    List<CurrencyPriceDTO> getPriceByPair(@PathParam("pair") String pair);
 
 }
