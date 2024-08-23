@@ -58,7 +58,7 @@ public class QuotationService {
         BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.getBid());
         Boolean updatePrice = false;
 
-        QuotationEntity lastPrice = quotationRepository.find("pair", pair).singleResultOptional().orElse(null);
+        QuotationEntity lastPrice = quotationRepository.findLastByPair(pair);
 
         if (lastPrice == null) {
             saveQuotation(currencyPriceInfo, pair);

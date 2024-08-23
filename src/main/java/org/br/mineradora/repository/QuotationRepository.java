@@ -6,4 +6,9 @@ import org.br.mineradora.entity.QuotationEntity;
 
 @ApplicationScoped
 public class QuotationRepository implements PanacheRepository<QuotationEntity> {
+
+    public QuotationEntity findLastByPair(String pair) {
+        return find("pair = ?1 order by date desc", pair).firstResult();
+    }
+
 }
