@@ -69,3 +69,5 @@ Create your first JPA entity
 
 [Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
 
+![Arquitetura-projeto-Microsserviços](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjp0kc7mCs6pgnh4hPUSd4MHyCzJYBUTYLDw1Mz3oN2ENdWMc6a_RcSlRK94ar_r9jigsJ7jN2IcvKFT8oeEF7ngf-Atauz_tok_5ogwSjt4wTVLUlQbUmyxOStpnH0NZ6VPkw0BFmx5CQS_IzIi4Z6nxf7R5uvfGehN6qVrqFLLjbjGA/s1600/ArquiteturaCurso.jpg)
+
