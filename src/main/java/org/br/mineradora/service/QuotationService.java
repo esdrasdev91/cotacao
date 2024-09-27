@@ -85,4 +85,8 @@ public class QuotationService {
         System.err.println("Salvo com sucesso!" + quotation);
     }
 
+    public void cleanDataBase() {
+        quotationRepository.deleteAll();
+    }
+
 }
