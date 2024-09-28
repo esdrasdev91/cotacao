@@ -23,4 +23,11 @@ public class QuotationSchedulerUSD {
         quotationService.getCurrencyPrice("USD-BRL");
     }
 
+    @Transactional
+    @Scheduled(cron = "0 0 23 * * ?", identity = "task-job-usd")
+    void scheduleCleanDataBase(){
+        LOG.info("-- Executando Scheduler Clean Data Base para USD-BRL --");
+        quotationService.cleanDataBase();
+    }
+
 }
